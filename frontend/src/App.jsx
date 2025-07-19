@@ -15,7 +15,7 @@ function App() {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      let url = "http://localhost:5000/contacts";
+      let url = "http://localhost:8000/contacts";
       if (searchTerm) {
         url += "?search=" + encodeURIComponent(searchTerm);
       }
@@ -51,6 +51,30 @@ function App() {
   const onUpdate = () => {
     closeModal();
     fetchContacts();
+  };
+
+  const handleDelete = async (contactId) => {
+    if (window.confirm("Are you sure you want to delete this contact?")) {
+      try {
+        const response = await fetch(`http://localhost:8000/delete_contact/${contactId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          // Remove the contact from the local state
+          setContacts(contacts.filter(contact => contact.id !== contactId));
+        } else {
+          const data = await response.json();
+          alert(data.message || "Error deleting contact");
+        }
+      } catch (error) {
+        console.error("Error deleting contact:", error);
+        alert("An error occurred while deleting the contact");
+      }
+    }
   };
 
   return (
@@ -128,7 +152,7 @@ function ContactForm({ existingContact = {}, updateCallback }) {
     e.preventDefault();
     
     try {
-      const url = "http://localhost:5000/" + (updating ? `update_contact/${existingContact.id}` : "create_contact");
+      const url = "http://localhost:8000/" + (updating ? `update_contact/${existingContact.id}` : "create_contact");
       const options = {
         method: updating ? "PATCH" : "POST",
         headers: {
